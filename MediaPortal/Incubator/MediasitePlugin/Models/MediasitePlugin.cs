@@ -31,6 +31,7 @@ using www.sonicfoundry.com.Mediasite.Services60.Messages;
 using MediasiteAPIConnector;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.ServiceModel;
 
 namespace MediasitePlugin
 {
@@ -78,7 +79,8 @@ namespace MediasitePlugin
     /// E8585B55-22B4-4E79-9D3B-AA41FAF88355
     /// </summary>
     protected const string HELLOWORLD_RESOURCE = "[Mediasite.HelloWorldText]";
-    private const string _APIEndpoint = "EdasServiceEndpoint";
+    private const string _APIEndpoint = "http://sonicse.mediasite.com/mediasite/services60/edassixonefive.svc";
+    private const string _EndpointName = "EdasServiceEndpoint";
     private const string _PrivateKey = "uTBisLe83ZgZExYUYcKkVA==";
     private const string _PublicKey = "goRipJU5GN9vA+ptwyui3Q==";
     private const string _Application = "MediaPortal2";
@@ -99,7 +101,7 @@ namespace MediasitePlugin
     protected readonly AbstractProperty _helloStringProperty;
     protected string _RequestTicket;
     private EdasClient _Client;
-
+    private ItemsList _Presentations;
     #endregion
 
     #region Ctor & maintainance
@@ -127,7 +129,7 @@ namespace MediasitePlugin
       get
       {
         // TODO: don't rebuild lists in getter, init them in EnterModelContext
-        return loadPresentations();
+          return _Presentations;
       }
     }
 
@@ -141,7 +143,30 @@ namespace MediasitePlugin
     {
       // Moved from CTOR
       _RequestTicket = new APIAuthenticator(_APIEndpoint, _PublicKey, _PrivateKey).RequestTicket;
-      _Client = new EdasClient(_APIEndpoint); 
+      var binding = new BasicHttpBinding()
+      {
+          ReceiveTimeout = new TimeSpan(0, 5, 0),
+          SendTimeout = new TimeSpan(0, 5, 0),
+          MaxBufferPoolSize = 2147483647,
+          MaxBufferSize = 2147483647,
+          MaxReceivedMessageSize = 2147483647,
+          HostNameComparisonMode = HostNameComparisonMode.StrongWildcard,
+
+      };
+      if (_APIEndpoint.Substring(0, 5) == "https")
+      {
+          binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
+          binding.Security.Mode = BasicHttpSecurityMode.Transport;
+      }
+      else
+      {
+          binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
+          binding.Security.Mode = BasicHttpSecurityMode.None;
+      }
+
+      EndpointAddress endpoint = new EndpointAddress(new Uri(_APIEndpoint, UriKind.Absolute));
+                
+      _Client = new EdasClient(binding,endpoint); 
       var _pRequest = new QueryPresentationsByCriteriaRequest() { Ticket = _RequestTicket, ApplicationName = "MediaPortal2", QueryCriteria = new PresentationQueryCriteria() { StartDate = Convert.ToDateTime("01/01/00"), EndDate = System.DateTime.Now, PermissionMask = ResourcePermissionMask.Read }, Options = new QueryOptions() { BatchSize = 100, StartIndex = 0 } };
       var _tpresentations = _Client.QueryPresentationsByCriteria(_pRequest);
       var list = new ItemsList();
@@ -210,7 +235,7 @@ namespace MediasitePlugin
 
     public void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
-
+        _Presentations = loadPresentations();
 
     }
 
