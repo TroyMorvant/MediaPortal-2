@@ -23,68 +23,31 @@
 #endregion
 
 using System;
-using MediaPortal.Common.General;
+using MediaPortal.Common.Commands;
 using MediaPortal.UI.Presentation.Models;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Presentation.DataObjects;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
 using MediasiteAPIConnector;
-using System.ComponentModel;
 using System.Collections.Generic;
 using System.ServiceModel;
 
 namespace MediasitePlugin
 {
   /// <summary>
-  /// Example for a simple model.
-  /// The screenfile to this model is located at:
-  /// /Skins/default/screens/hello_world.xaml
+  /// Todo: Add comments.
   /// </summary>
-  /// <remarks>
-  /// <para>
-  /// Models are used for providing data from the system to the skin and for executing actions (commands)
-  /// which are triggered by the Skin, for example by clicking a button.
-  /// </para>
-  /// <para>
-  /// All public properties can be data-bound by the skin, for example the <see cref="HelloString"/> property.
-  /// Note that properties, which are updated by the model and whose new value should be propagated to the
-  /// skin, must be backed by an instance of <see cref="AbstractProperty"/>. That instance must be made available
-  /// to the skin engine by publishing it under the same name as the actual property plus "Property", see for example
-  /// <see cref="HelloStringProperty"/>. In models, always <see cref="WProperty"/> instances are used.
-  /// </para>
-  /// <para>
-  /// You can also consider to implement the interface <see cref="IWorkflowModel"/>, which makes it
-  /// possible to attend the screenflow = workflow of the user session. When that interface is implemented and this
-  /// model is registered in a workflow state as backing workflow model, the model will get notifications when the
-  /// GUI navigation switches to or away from its workflow state.
-  /// </para>
-  /// <para>
-  /// To make an UI model known by the system (and thus loadable by the skin), it is necessary to register it
-  /// in the <c>plugin.xml</c> file.
-  /// </para>
-  /// </remarks>
   public class MediasitePlugin : IWorkflowModel
   {
     #region Consts
 
-    /// <summary>
-    /// This is a localized string resource. Localized string resources always look like this:
-    /// <example>
-    /// [Section.Name]
-    /// </example>
-    /// Localized resources must be present at least in the english language, as this is the default.
-    /// In the english language file of this hello world plugin, you'll find the translation of this string.
-    /// The language file is located at: /Language/strings_en.xml
-    /// 
-    /// E8585B55-22B4-4E79-9D3B-AA41FAF88355
-    /// </summary>
-    protected const string HELLOWORLD_RESOURCE = "[Mediasite.HelloWorldText]";
-    private const string _APIEndpoint = "http://sonicse.mediasite.com/mediasite/services60/edassixonefive.svc";
-    private const string _EndpointName = "EdasServiceEndpoint";
-    private const string _PrivateKey = "uTBisLe83ZgZExYUYcKkVA==";
-    private const string _PublicKey = "goRipJU5GN9vA+ptwyui3Q==";
-    private const string _Application = "MediaPortal2";
+    private const string API_ENDPOINT = "http://sonicse.mediasite.com/mediasite/services60/edassixonefive.svc";
+    private const string PRIVATE_KEY = "uTBisLe83ZgZExYUYcKkVA==";
+    private const string PUBLIC_KEY = "goRipJU5GN9vA+ptwyui3Q==";
+    private const string APPLICATION = "MediaPortal2";
+
     public const string MODEL_ID_STR = "89A89847-7523-47CB-9276-4EC544B8F19A";
+    public static Guid MODEL_ID = new Guid(MODEL_ID_STR);
 
     /// <summary>
     /// Another localized string resource.
@@ -98,10 +61,11 @@ namespace MediasitePlugin
     /// <summary>
     /// This property holds a string that we will modify in this tutorial.
     /// </summary>
-    protected readonly AbstractProperty _helloStringProperty;
-    protected string _RequestTicket;
-    private EdasClient _Client;
-    private ItemsList _Presentations;
+    protected string _requestTicket;
+    private EdasClient _client;
+    private ItemsList _presentations;
+    private ItemsList _slides;
+
     #endregion
 
     #region Ctor & maintainance
@@ -111,40 +75,46 @@ namespace MediasitePlugin
     /// </summary>
     public MediasitePlugin()
     {
-      // In models, properties will always be WProperty instances. When using SProperties for screen databinding,
-      // the system might run into memory leaks.
-      _helloStringProperty = new WProperty(typeof(string), HELLOWORLD_RESOURCE);
+
     }
+
     #endregion
 
     #region Public members
 
     /// <summary>
-    /// This sample property will be accessed by the hello_world screen. Note that the data type must be the same
-    /// as given in the instantiation of our backing property <see cref="_helloStringProperty"/>.
+    /// Gets an ItemList of all Presentations.
     /// </summary>
     /// 
     public ItemsList Presentations
     {
       get
       {
-        // TODO: don't rebuild lists in getter, init them in EnterModelContext
-          return _Presentations;
+        return _presentations;
+      }
+    }
+    /// <summary>
+    /// Gets an ItemList of slides for current selected Presentation.
+    /// </summary>
+    public ItemsList Slides
+    {
+      get
+      {
+        return _slides;
       }
     }
 
-    public string CreateAuthTicket(string MediasiteResourceID)
+    public string CreateAuthTicket(string mediasiteResourceID)
     {
-      var _aRequest = new CreateAuthTicketRequest() { ApplicationName = _Application, Ticket = _RequestTicket, TicketSettings = new CreateAuthTicketSettings() { Username = "MediaPortalUser", ResourceId = MediasiteResourceID, MinutesToLive = 10 } };
-      return _Client.CreateAuthTicket(_aRequest).AuthTicketId;
+      var aRequest = new CreateAuthTicketRequest { ApplicationName = APPLICATION, Ticket = _requestTicket, TicketSettings = new CreateAuthTicketSettings() { Username = "MediaPortalUser", ResourceId = mediasiteResourceID, MinutesToLive = 10 } };
+      return _client.CreateAuthTicket(aRequest).AuthTicketId;
     }
 
-    public ItemsList loadPresentations()
+    public ItemsList LoadPresentations()
     {
-      // Moved from CTOR
-      _RequestTicket = new APIAuthenticator(_APIEndpoint, _PublicKey, _PrivateKey).RequestTicket;
-      var binding = new BasicHttpBinding()
-      {
+      _requestTicket = new APIAuthenticator(API_ENDPOINT, PUBLIC_KEY, PRIVATE_KEY).RequestTicket;
+      var binding = new BasicHttpBinding
+        {
           ReceiveTimeout = new TimeSpan(0, 5, 0),
           SendTimeout = new TimeSpan(0, 5, 0),
           MaxBufferPoolSize = 2147483647,
@@ -152,71 +122,62 @@ namespace MediasitePlugin
           MaxReceivedMessageSize = 2147483647,
           HostNameComparisonMode = HostNameComparisonMode.StrongWildcard,
 
-      };
-      if (_APIEndpoint.Substring(0, 5) == "https")
-      {
-          binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
-          binding.Security.Mode = BasicHttpSecurityMode.Transport;
-      }
-      else
-      {
-          binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
-          binding.Security.Mode = BasicHttpSecurityMode.None;
-      }
+        };
+      binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
+      binding.Security.Mode = API_ENDPOINT.Substring(0, 5) == "https" ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None;
 
-      EndpointAddress endpoint = new EndpointAddress(new Uri(_APIEndpoint, UriKind.Absolute));
-                
-      _Client = new EdasClient(binding,endpoint); 
-      var _pRequest = new QueryPresentationsByCriteriaRequest() { Ticket = _RequestTicket, ApplicationName = "MediaPortal2", QueryCriteria = new PresentationQueryCriteria() { StartDate = Convert.ToDateTime("01/01/00"), EndDate = System.DateTime.Now, PermissionMask = ResourcePermissionMask.Read }, Options = new QueryOptions() { BatchSize = 100, StartIndex = 0 } };
-      var _tpresentations = _Client.QueryPresentationsByCriteria(_pRequest);
+      EndpointAddress endpoint = new EndpointAddress(new Uri(API_ENDPOINT, UriKind.Absolute));
+      _client = new EdasClient(binding, endpoint);
+      var pRequest = new QueryPresentationsByCriteriaRequest
+        {
+          Ticket = _requestTicket,
+          ApplicationName = APPLICATION,
+          QueryCriteria = new PresentationQueryCriteria { StartDate = Convert.ToDateTime("01/01/00"), EndDate = DateTime.Now, PermissionMask = ResourcePermissionMask.Read },
+          Options = new QueryOptions { BatchSize = 100, StartIndex = 0 }
+        };
+
+      var tpresentations = _client.QueryPresentationsByCriteria(pRequest);
       var list = new ItemsList();
-      foreach (PresentationDetails _presentation in _tpresentations.Presentations)
+      foreach (PresentationDetails presentation in tpresentations.Presentations)
       {
-        ListItem _item = new ListItem("Name", _presentation.Name);
-        _item.SetLabel("ID", _presentation.Id);
-        _item.SetLabel("URL", _presentation.VideoUrl + "?AuthTicket=" + CreateAuthTicket(_presentation.Id));
-        _item.SetLabel("FileURL", _presentation.FileServerUrl);
-        var _slides = _Client.QuerySlides(new QuerySlidesRequest() { PresentationId = _presentation.Id, Ticket = _RequestTicket, ApplicationName = _Application });
-        list.Add(_item);
+        ListItem item = new ListItem("Name", presentation.Name);
+        PresentationDetails localPresentation = presentation; // Keep local variable to avoid changing values in iterations
+        item.Command = new MethodDelegateCommand(() => LoadSlides(localPresentation));
+        // TODO: internal ID and URLs are not needed on Skin level
+        //item.SetLabel("ID", presentation.Id);
+        //item.SetLabel("URL", presentation.VideoUrl + "?AuthTicket=" + CreateAuthTicket(presentation.Id));
+        //item.SetLabel("FileURL", presentation.FileServerUrl);
+        list.Add(item);
       }
       return list;
     }
 
-
-    public string HelloString
+    private void LoadSlides(PresentationDetails presentation)
     {
-      get { return (string) _helloStringProperty.GetValue(); }
-      set { _helloStringProperty.SetValue(value); }
+      var slides = _client.QuerySlides(new QuerySlidesRequest { PresentationId = presentation.Id, Ticket = _requestTicket, ApplicationName = APPLICATION });
+      var list = new ItemsList();
+      var dummySlides = new List<SlideDetails> { new SlideDetails { Title = "Dummy 1" }, new SlideDetails { Title = "Dummy 2" } };
+      foreach (SlideDetails slide in dummySlides /*TODO: slides.Slides */)
+      {
+        ListItem item = new ListItem("Name", slide.Title);
+        SlideDetails localSlide = slide; // Keep local variable to avoid changing values in iterations
+        item.Command = new MethodDelegateCommand(() => ShowSlide(localSlide));
+        list.Add(item);
+      }
+      _slides = list;
+    }
+
+    private void ShowSlide(SlideDetails localSlide)
+    {
+      // TODO: what to do with a single slide?
     }
 
     /// <summary>
-    /// This is the dependency property for our sample string. It is needed to propagate changes to the skin.
+    /// Refreshes the contents of <see cref="Presentations"/> list.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the screen databinds to the <see cref="HelloString"/> property in a binding mode which will propagate data
-    /// changes from the model to the skin (OneWay, TwoWay), the SkinEngine will attach a change handler to this property
-    /// and react to changes.
-    /// </para>
-    /// <para>
-    /// In other words: For each property <c>Xyz</c>, which should be able to be attached to, there must be an
-    /// <see cref="AbstractProperty"/> with name <c>XyzProperty</c>.
-    /// Only if <c>XyzProperty</c> is present in the model, value changes can be propagated to the skin.
-    /// </para>
-    /// </remarks>
-    public AbstractProperty HelloStringProperty
+    public void RefreshPresentations()
     {
-      get { return _helloStringProperty; }
-    }
-
-    /// <summary>
-    /// Method which will be called from our screen. We will change the value of our HelloWorld string here.
-    /// </summary>
-    public void ChangeHelloWorldString()
-    {
-      // Localized resources in the form [Section.Name] can be used in each Label in screens. Labels automatically
-      // request the localized string from the system if a text of that form is written into their Content property.
-      HelloString = COMMAND_TRIGGERED_RESOURCE;
+      _presentations = LoadPresentations();
     }
 
     #endregion
@@ -225,7 +186,7 @@ namespace MediasitePlugin
 
     public Guid ModelId
     {
-      get { return new Guid(MODEL_ID_STR); }
+      get { return MODEL_ID; }
     }
 
     public bool CanEnterState(NavigationContext oldContext, NavigationContext newContext)
@@ -235,14 +196,11 @@ namespace MediasitePlugin
 
     public void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
-        _Presentations = loadPresentations();
-
+      RefreshPresentations();
     }
 
     public void ExitModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
-      //DisposeTree();
-
     }
 
     public void ChangeModelContext(NavigationContext oldContext, NavigationContext newContext, bool push)
