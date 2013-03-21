@@ -41,9 +41,9 @@ namespace MediasitePlugin
   {
     #region Consts
 
-    private const string API_ENDPOINT = "http://sonicse.mediasite.com/mediasite/services60/edassixonefive.svc";
+    private const string API_ENDPOINT = "http://ais.sofodev.com/mediasite/services60/edassixonefive.svc";
     private const string PRIVATE_KEY = "uTBisLe83ZgZExYUYcKkVA==";
-    private const string PUBLIC_KEY = "goRipJU5GN9vA+ptwyui3Q==";
+    private const string PUBLIC_KEY = "EAJos+ME82eh+rCUA+96tA==";
     private const string APPLICATION = "MediaPortal2";
 
     public const string MODEL_ID_STR = "89A89847-7523-47CB-9276-4EC544B8F19A";
@@ -154,12 +154,20 @@ namespace MediasitePlugin
 
     private void LoadSlides(PresentationDetails presentation)
     {
-      var slides = _client.QuerySlides(new QuerySlidesRequest { PresentationId = presentation.Id, Ticket = _requestTicket, ApplicationName = APPLICATION });
+      var slides = _client.QuerySlides(new QuerySlidesRequest 
+      { 
+          PresentationId = presentation.Id, 
+          Ticket = _requestTicket,
+          ApplicationName = APPLICATION,
+          StartIndex = 0,
+          Count = 10
+      });
       var list = new ItemsList();
       var dummySlides = new List<SlideDetails> { new SlideDetails { Title = "Dummy 1" }, new SlideDetails { Title = "Dummy 2" } };
-      foreach (SlideDetails slide in dummySlides /*TODO: slides.Slides */)
+      foreach (SlideDetails slide in slides.Slides /*TODO: slides.Slides */)
       {
         ListItem item = new ListItem("Name", slide.Title);
+        item.SetLabel("Time", slide.Time.ToString());
         SlideDetails localSlide = slide; // Keep local variable to avoid changing values in iterations
         item.Command = new MethodDelegateCommand(() => ShowSlide(localSlide));
         list.Add(item);
