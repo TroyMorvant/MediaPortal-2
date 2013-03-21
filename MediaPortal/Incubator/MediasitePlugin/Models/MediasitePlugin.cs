@@ -63,8 +63,8 @@ namespace MediasitePlugin
     /// </summary>
     protected string _requestTicket;
     private EdasClient _client;
-    private ItemsList _presentations;
-    private ItemsList _slides;
+    private readonly ItemsList _presentations = new ItemsList();
+    private readonly ItemsList _slides = new ItemsList();
 
     #endregion
 
@@ -110,7 +110,10 @@ namespace MediasitePlugin
       return _client.CreateAuthTicket(aRequest).AuthTicketId;
     }
 
-    public ItemsList LoadPresentations()
+    /// <summary>
+    /// Refreshes the contents of <see cref="Presentations"/> list.
+    /// </summary>
+    public void RefreshPresentations()
     {
       _requestTicket = new APIAuthenticator(API_ENDPOINT, PUBLIC_KEY, PRIVATE_KEY).RequestTicket;
       var binding = new BasicHttpBinding
@@ -136,8 +139,8 @@ namespace MediasitePlugin
           Options = new QueryOptions { BatchSize = 100, StartIndex = 0 }
         };
 
+      _presentations.Clear();
       var tpresentations = _client.QueryPresentationsByCriteria(pRequest);
-      var list = new ItemsList();
       foreach (PresentationDetails presentation in tpresentations.Presentations)
       {
         ListItem item = new ListItem("Name", presentation.Name);
@@ -147,9 +150,9 @@ namespace MediasitePlugin
         //item.SetLabel("ID", presentation.Id);
         //item.SetLabel("URL", presentation.VideoUrl + "?AuthTicket=" + CreateAuthTicket(presentation.Id));
         //item.SetLabel("FileURL", presentation.FileServerUrl);
-        list.Add(item);
+        _presentations.Add(item);
       }
-      return list;
+      _presentations.FireChange();
     }
 
     private void LoadSlides(PresentationDetails presentation)
@@ -162,30 +165,21 @@ namespace MediasitePlugin
           StartIndex = 0,
           Count = 10
       });
-      var list = new ItemsList();
-      var dummySlides = new List<SlideDetails> { new SlideDetails { Title = "Dummy 1" }, new SlideDetails { Title = "Dummy 2" } };
-      foreach (SlideDetails slide in slides.Slides /*TODO: slides.Slides */)
+      _slides.Clear();
+      foreach (SlideDetails slide in slides.Slides)
       {
         ListItem item = new ListItem("Name", slide.Title);
         item.SetLabel("Time", slide.Time.ToString());
         SlideDetails localSlide = slide; // Keep local variable to avoid changing values in iterations
         item.Command = new MethodDelegateCommand(() => ShowSlide(localSlide));
-        list.Add(item);
+        _slides.Add(item);
       }
-      _slides = list;
+      _slides.FireChange();
     }
 
-    private void ShowSlide(SlideDetails localSlide)
+    private void ShowSlide(SlideDetails slide)
     {
       // TODO: what to do with a single slide?
-    }
-
-    /// <summary>
-    /// Refreshes the contents of <see cref="Presentations"/> list.
-    /// </summary>
-    public void RefreshPresentations()
-    {
-      _presentations = LoadPresentations();
     }
 
     #endregion
