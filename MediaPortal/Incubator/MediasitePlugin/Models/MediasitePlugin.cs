@@ -65,6 +65,7 @@ namespace MediasitePlugin
     private EdasClient _client;
     private readonly ItemsList _presentations = new ItemsList();
     private readonly ItemsList _slides = new ItemsList();
+    private SiteProperties _siteProperties;
 
     #endregion
 
@@ -104,10 +105,55 @@ namespace MediasitePlugin
       }
     }
 
+    
+    /// <summary>
+    /// Refreshes Mediasite system properties
+    /// </summary>
+    public void LoadSiteProperties()
+    {
+      var sitePropertiesResponse = _client.QuerySiteProperties(new QuerySitePropertiesRequest()
+      {
+        Ticket = _requestTicket,
+        ApplicationName = APPLICATION
+      });
+
+      if (sitePropertiesResponse != null)
+      {
+        _siteProperties = sitePropertiesResponse.Properties;
+      }
+    }
+
+    /// <summary>
+    /// Returns an Authentication Ticket that is used to authorize the user to view the selected resource.
+    /// </summary>
     public string CreateAuthTicket(string mediasiteResourceID)
     {
-      var aRequest = new CreateAuthTicketRequest { ApplicationName = APPLICATION, Ticket = _requestTicket, TicketSettings = new CreateAuthTicketSettings() { Username = "MediaPortalUser", ResourceId = mediasiteResourceID, MinutesToLive = 10 } };
+      var aRequest = new CreateAuthTicketRequest { ApplicationName = APPLICATION, Ticket = _requestTicket, TicketSettings = new CreateAuthTicketSettings() { Username = "MediaPortal2User", ResourceId = mediasiteResourceID, MinutesToLive = 10 } };
       return _client.CreateAuthTicket(aRequest).AuthTicketId;
+    }
+
+    /// <summary>
+    /// Initializes the Mediasite API Client
+    /// </summary>
+    public void InitClient()
+    {
+      _requestTicket = new APIAuthenticator(API_ENDPOINT, PUBLIC_KEY, PRIVATE_KEY).RequestTicket;
+      var binding = new BasicHttpBinding
+      {
+        ReceiveTimeout = new TimeSpan(0, 5, 0),
+        SendTimeout = new TimeSpan(0, 5, 0),
+        MaxBufferPoolSize = 2147483647,
+        MaxBufferSize = 2147483647,
+        MaxReceivedMessageSize = 2147483647,
+        HostNameComparisonMode = HostNameComparisonMode.StrongWildcard,
+
+      };
+      binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
+      binding.Security.Mode = API_ENDPOINT.Substring(0, 5) == "https" ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None;
+
+      EndpointAddress endpoint = new EndpointAddress(new Uri(API_ENDPOINT, UriKind.Absolute));
+      _client = new EdasClient(binding, endpoint);
+      LoadSiteProperties();
     }
 
     /// <summary>
@@ -115,22 +161,7 @@ namespace MediasitePlugin
     /// </summary>
     public void RefreshPresentations()
     {
-      _requestTicket = new APIAuthenticator(API_ENDPOINT, PUBLIC_KEY, PRIVATE_KEY).RequestTicket;
-      var binding = new BasicHttpBinding
-        {
-          ReceiveTimeout = new TimeSpan(0, 5, 0),
-          SendTimeout = new TimeSpan(0, 5, 0),
-          MaxBufferPoolSize = 2147483647,
-          MaxBufferSize = 2147483647,
-          MaxReceivedMessageSize = 2147483647,
-          HostNameComparisonMode = HostNameComparisonMode.StrongWildcard,
-
-        };
-      binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
-      binding.Security.Mode = API_ENDPOINT.Substring(0, 5) == "https" ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None;
-
-      EndpointAddress endpoint = new EndpointAddress(new Uri(API_ENDPOINT, UriKind.Absolute));
-      _client = new EdasClient(binding, endpoint);
+      
       var pRequest = new QueryPresentationsByCriteriaRequest
         {
           Ticket = _requestTicket,
@@ -163,21 +194,22 @@ namespace MediasitePlugin
           Ticket = _requestTicket,
           ApplicationName = APPLICATION,
           StartIndex = 0,
-          Count = 10
+          Count = presentation.SlideCount
       });
       _slides.Clear();
       foreach (SlideDetails slide in slides.Slides)
       {
-        ListItem item = new ListItem("Name", slide.Title);
+        string _URL = presentation.FileServerUrl.ToLower().Replace(_siteProperties.Name.ToLower(), "Public") + @"/" + 
+          presentation.Id + @"/" + String.Format(presentation.Content[0].FileNameWithExtension, slide.Number.ToString("D" + 4));
+        ListItem item = new ListItem("URL", _URL);
         item.SetLabel("Time", slide.Time.ToString());
-        SlideDetails localSlide = slide; // Keep local variable to avoid changing values in iterations
-        item.Command = new MethodDelegateCommand(() => ShowSlide(localSlide));
+        item.Command = new MethodDelegateCommand(() => ShowSlide(item));
         _slides.Add(item);
       }
       _slides.FireChange();
     }
 
-    private void ShowSlide(SlideDetails slide)
+    private void ShowSlide(ListItem slide)
     {
       // TODO: what to do with a single slide?
     }
@@ -198,6 +230,7 @@ namespace MediasitePlugin
 
     public void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
+      InitClient();
       RefreshPresentations();
     }
 
