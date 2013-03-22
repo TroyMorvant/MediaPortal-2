@@ -23,10 +23,18 @@
 #endregion
 
 using System;
+using System.Linq;
+using MediaPortal.Common;
 using MediaPortal.Common.Commands;
+using MediaPortal.Common.MediaManagement;
+using MediaPortal.Common.MediaManagement.DefaultItemAspects;
+using MediaPortal.Common.SystemResolver;
 using MediaPortal.UI.Presentation.Models;
+using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Presentation.DataObjects;
+using MediaPortal.UiComponents.Media.Models;
+using MediasitePlugin.ResourceProvider;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
 using MediasiteAPIConnector;
 using System.Collections.Generic;
@@ -105,17 +113,17 @@ namespace MediasitePlugin
       }
     }
 
-    
+
     /// <summary>
     /// Refreshes Mediasite system properties
     /// </summary>
     public void LoadSiteProperties()
     {
-      var sitePropertiesResponse = _client.QuerySiteProperties(new QuerySitePropertiesRequest()
-      {
-        Ticket = _requestTicket,
-        ApplicationName = APPLICATION
-      });
+      var sitePropertiesResponse = _client.QuerySiteProperties(new QuerySitePropertiesRequest
+        {
+          Ticket = _requestTicket,
+          ApplicationName = APPLICATION
+        });
 
       if (sitePropertiesResponse != null)
       {
@@ -128,7 +136,7 @@ namespace MediasitePlugin
     /// </summary>
     public string CreateAuthTicket(string mediasiteResourceID)
     {
-      var aRequest = new CreateAuthTicketRequest { ApplicationName = APPLICATION, Ticket = _requestTicket, TicketSettings = new CreateAuthTicketSettings() { Username = "MediaPortal2User", ResourceId = mediasiteResourceID, MinutesToLive = 10 } };
+      var aRequest = new CreateAuthTicketRequest { ApplicationName = APPLICATION, Ticket = _requestTicket, TicketSettings = new CreateAuthTicketSettings { Username = "MediaPortal2User", ResourceId = mediasiteResourceID, MinutesToLive = 10 } };
       return _client.CreateAuthTicket(aRequest).AuthTicketId;
     }
 
@@ -161,7 +169,6 @@ namespace MediasitePlugin
     /// </summary>
     public void RefreshPresentations()
     {
-      
       var pRequest = new QueryPresentationsByCriteriaRequest
         {
           Ticket = _requestTicket,
@@ -182,46 +189,38 @@ namespace MediasitePlugin
       _presentations.FireChange();
     }
 
-    private PresentationContentDetails GetMP4Content(PresentationContentDetails[] Content)
+    private PresentationContentDetails GetMP4Content(IEnumerable<PresentationContentDetails> contents)
     {
-      foreach (PresentationContentDetails _content in Content)
-      {
-        if (_content.ContentMimeType == "video/mp4")
-        {
-          return _content;
-        }
-      }
-      return null;
+      return contents.FirstOrDefault(content => content.ContentMimeType == "video/mp4");
     }
 
-    private PresentationContentDetails GetSlideContent(PresentationContentDetails[] Content)
+    private PresentationContentDetails GetSlideContent(IEnumerable<PresentationContentDetails> contents)
     {
-      foreach (PresentationContentDetails _content in Content)
-      {
-        if (_content.ContentType == PresentationContentTypeDetails.Slides)
-        {
-          return _content;
-        }
-      }
-      return null;
+      return contents.FirstOrDefault(content => content.ContentType == PresentationContentTypeDetails.Slides);
     }
 
     private void LoadSlides(PresentationDetails presentation)
     {
-      var slides = _client.QuerySlides(new QuerySlidesRequest 
-      { 
-          PresentationId = presentation.Id, 
-          Ticket = _requestTicket,
-          ApplicationName = APPLICATION,
-          StartIndex = 0,
-          Count = presentation.SlideCount
+      var slides = _client.QuerySlides(new QuerySlidesRequest
+      {
+        PresentationId = presentation.Id,
+        Ticket = _requestTicket,
+        ApplicationName = APPLICATION,
+        StartIndex = 0,
+        Count = presentation.SlideCount
       });
       _slides.Clear();
       foreach (SlideDetails slide in slides.Slides)
       {
-        string _URL = presentation.FileServerUrl.ToLower().Replace(_siteProperties.Name.ToLower(), "Public") + @"/" + 
+        string url = presentation.FileServerUrl.ToLower().Replace(_siteProperties.Name.ToLower(), "Public") + @"/" +
           presentation.Id + @"/" + String.Format(presentation.Content[0].FileNameWithExtension, slide.Number.ToString("D" + 4));
-        ListItem item = new ListItem("URL", _URL);
+
+        string title = slide.Title;
+        if (string.IsNullOrWhiteSpace(title))
+          title = string.Format("Time: " + TimeSpan.FromMilliseconds(slide.Time));
+
+        ListItem item = new ListItem("Name", title);
+        item.SetLabel("URL", url);
         SlideDetails localSlide = slide;
         item.Command = new MethodDelegateCommand(() => ShowSlide(localSlide));
         _slides.Add(item);
@@ -231,13 +230,42 @@ namespace MediasitePlugin
 
     private void ShowSlide(SlideDetails slide)
     {
-      // TODO: what to do with a single slide?
+      IPlayerContextManager pcm = ServiceRegistration.Get<IPlayerContextManager>();
+      IPlayerContext ctx = pcm.GetPlayerContext(PlayerChoice.CurrentPlayer);
+      if (ctx == null)
+        return;
+      MediaSitePlayer mediaSitePlayer = ctx.CurrentPlayer as MediaSitePlayer;
+      if (mediaSitePlayer ==  null)
+        return;
+
+      mediaSitePlayer.CurrentTime = TimeSpan.FromMilliseconds(slide.Time);
     }
 
     private void PlayVideo(PresentationDetails presentation)
     {
-      //TODO: Add Playback functionality
+      LoadSlides(presentation);
+
       string videoURL = presentation.VideoUrl.Replace("$$NAME$$", GetMP4Content(presentation.Content).FileNameWithExtension).Replace("$$PBT$$", CreateAuthTicket(presentation.Id)).Replace("$$SITE$$", SOFOSITE);
+
+      IDictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
+
+      MediaItemAspect providerResourceAspect;
+      aspects[ProviderResourceAspect.ASPECT_ID] = providerResourceAspect = new MediaItemAspect(ProviderResourceAspect.Metadata);
+      MediaItemAspect mediaAspect;
+      aspects[MediaAspect.ASPECT_ID] = mediaAspect = new MediaItemAspect(MediaAspect.Metadata);
+      MediaItemAspect videoAspect;
+      aspects[VideoAspect.ASPECT_ID] = videoAspect = new MediaItemAspect(VideoAspect.Metadata);
+
+      providerResourceAspect.SetAttribute(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH, RawUrlMediaProvider.ToProviderResourcePath(videoURL).Serialize());
+      providerResourceAspect.SetAttribute(ProviderResourceAspect.ATTR_SYSTEM_ID, ServiceRegistration.Get<ISystemResolver>().LocalSystemId);
+
+      mediaAspect.SetAttribute(MediaAspect.ATTR_MIME_TYPE, MediaSitePlayer.MEDIASITE_MIMETYPE);
+      mediaAspect.SetAttribute(MediaAspect.ATTR_TITLE, presentation.Name);
+      videoAspect.SetAttribute(VideoAspect.ATTR_STORYPLOT, presentation.Description);
+
+      MediaItem mediaItem = new MediaItem(Guid.Empty, aspects);
+
+      PlayItemsModel.PlayItem(mediaItem);
     }
 
     #endregion
