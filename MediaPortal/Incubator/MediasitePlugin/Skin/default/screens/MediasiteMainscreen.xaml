@@ -50,7 +50,7 @@
               <Button Content="[Mediasite.Refresh]" Style="{ThemeResource ButtonWideStyle}" Margin="10" HorizontalAlignment="Right" 
                Command="{Command RefreshPresentations}"/>
 
-              <ListView x:Name="SlidesListView" Style="{ThemeResource MenuListViewStyle}" VerticalAlignment="Stretch"
+              <ListView x:Name="SlidesListView" Style="{ThemeResource SlidesListViewStyle}" VerticalAlignment="Stretch"
                 ItemsSource="{Binding Path=Slides,Mode=OneTime}" Background="#60000000" MinHeight="350">
                 <ListView.Resources>
                   <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>

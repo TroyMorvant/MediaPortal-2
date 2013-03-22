@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:collections="clr-namespace:MediaPortal.UI.Presentation.DataObjects;assembly=MediaPortal.UI"
+    DependsOnStyleResources="Consts,Colors,Buttons,OtherControls"
+    >
+  <!-- MediaSite model -->
+  <Model x:Key="MediaSiteModel" Id="89A89847-7523-47CB-9276-4EC544B8F19A"/>
+
+  <!-- SingleChannel Program Guide, Item contains StartTime and Title. -->
+  <DataTemplate x:Key="SlideDataTemplate" DataType="{x:Type collections:ListItem}">
+    <Grid x:Name="ItemControl" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Image x:Name="SlideImage" Grid.Column="0" Source="{Binding [URL]}" Height="80" Width="120" Stretch="Uniform" />
+      <Label x:Name="ItemLabel" Grid.Column="1" Content="{Binding [Name]}"
+          Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"
+          Margin="5,0,0,0"/>
+    </Grid>
+  </DataTemplate>
+
+  <!-- SlidesListViewStyle is used for Slides of a Presentation-->
+  <Style x:Key="SlidesListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
+    <Setter Property="ItemTemplate" Value="{ThemeResource SlideDataTemplate}"/>
+  </Style>
+  
+</ResourceDictionary>
