@@ -45,7 +45,7 @@ namespace MediasitePlugin
     private const string PRIVATE_KEY = "uTBisLe83ZgZExYUYcKkVA==";
     private const string PUBLIC_KEY = "EAJos+ME82eh+rCUA+96tA==";
     private const string APPLICATION = "MediaPortal2";
-
+    private const string SOFOSITE = "ais.sofodev.com";
     public const string MODEL_ID_STR = "89A89847-7523-47CB-9276-4EC544B8F19A";
     public static Guid MODEL_ID = new Guid(MODEL_ID_STR);
 
@@ -176,14 +176,34 @@ namespace MediasitePlugin
       {
         ListItem item = new ListItem("Name", presentation.Name);
         PresentationDetails localPresentation = presentation; // Keep local variable to avoid changing values in iterations
-        item.Command = new MethodDelegateCommand(() => LoadSlides(localPresentation));
-        // TODO: internal ID and URLs are not needed on Skin level
-        //item.SetLabel("ID", presentation.Id);
-        //item.SetLabel("URL", presentation.VideoUrl + "?AuthTicket=" + CreateAuthTicket(presentation.Id));
-        //item.SetLabel("FileURL", presentation.FileServerUrl);
+        item.Command = new MethodDelegateCommand(() => PlayVideo(localPresentation));
         _presentations.Add(item);
       }
       _presentations.FireChange();
+    }
+
+    private PresentationContentDetails GetMP4Content(PresentationContentDetails[] Content)
+    {
+      foreach (PresentationContentDetails _content in Content)
+      {
+        if (_content.ContentMimeType == "video/mp4")
+        {
+          return _content;
+        }
+      }
+      return null;
+    }
+
+    private PresentationContentDetails GetSlideContent(PresentationContentDetails[] Content)
+    {
+      foreach (PresentationContentDetails _content in Content)
+      {
+        if (_content.ContentType == PresentationContentTypeDetails.Slides)
+        {
+          return _content;
+        }
+      }
+      return null;
     }
 
     private void LoadSlides(PresentationDetails presentation)
@@ -202,16 +222,22 @@ namespace MediasitePlugin
         string _URL = presentation.FileServerUrl.ToLower().Replace(_siteProperties.Name.ToLower(), "Public") + @"/" + 
           presentation.Id + @"/" + String.Format(presentation.Content[0].FileNameWithExtension, slide.Number.ToString("D" + 4));
         ListItem item = new ListItem("URL", _URL);
-        item.SetLabel("Time", slide.Time.ToString());
-        item.Command = new MethodDelegateCommand(() => ShowSlide(item));
+        SlideDetails localSlide = slide;
+        item.Command = new MethodDelegateCommand(() => ShowSlide(localSlide));
         _slides.Add(item);
       }
       _slides.FireChange();
     }
 
-    private void ShowSlide(ListItem slide)
+    private void ShowSlide(SlideDetails slide)
     {
       // TODO: what to do with a single slide?
+    }
+
+    private void PlayVideo(PresentationDetails presentation)
+    {
+      //TODO: Add Playback functionality
+      string videoURL = presentation.VideoUrl.Replace("$$NAME$$", GetMP4Content(presentation.Content).FileNameWithExtension).Replace("$$PBT$$", CreateAuthTicket(presentation.Id)).Replace("$$SITE$$", SOFOSITE);
     }
 
     #endregion
