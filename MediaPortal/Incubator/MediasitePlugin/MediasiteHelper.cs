@@ -132,17 +132,17 @@ namespace MediasitePlugin
     /// <summary>
     /// Returns an array of SlideDetails for a given presentation
     /// </summary>
-    /// <param name="Presentation"></param>
+    /// <param name="presentation"></param>
     /// <returns></returns>
-    public SlideDetails[] LoadSlides(PresentationDetails Presentation)
+    public SlideDetails[] LoadSlides(PresentationDetails presentation)
     {
       var slides = _client.QuerySlides(new QuerySlidesRequest
       {
-        PresentationId = Presentation.Id,
+        PresentationId = presentation.Id,
         Ticket = _requestTicket,
         ApplicationName = _applicationName,
         StartIndex = 0,
-        Count = Presentation.SlideCount
+        Count = presentation.SlideCount
       });
 
       if (slides.Slides != null)
@@ -160,6 +160,14 @@ namespace MediasitePlugin
     public PresentationContentDetails GetSlideContent(IEnumerable<PresentationContentDetails> contents)
     {
       return contents.FirstOrDefault(content => content.ContentType == PresentationContentTypeDetails.Slides);
+    }
+
+    public string GetSlideUrl(PresentationDetails presentation, SlideDetails slide)
+    {
+      if (presentation == null || slide == null)
+        return null;
+      return presentation.FileServerUrl.ToLower().Replace(SiteName, "Public") + @"/" +
+          presentation.Id + @"/" + String.Format(GetSlideContent(presentation.Content).FileNameWithExtension, slide.Number.ToString("D" + 4));
     }
   }
 }

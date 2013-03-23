@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Screen
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mp_special_controls="clr-namespace:MediaPortal.UI.SkinEngine.SpecialElements.Controls"
+    xmlns:mp_special_workflow="clr-namespace:MediaPortal.UI.SkinEngine.SpecialElements.Workflow"
+    mp_special_workflow:WorkflowContext.StateSlot="Root"
+    x:Name="FullscreenContentMediaSiteScreen"
+    >
+  <Grid x:Name="FullscreenLayoutGrid" Context="{Model Id=89A89847-7523-47CB-9276-4EC544B8F19A}" Background="{ThemeResource BackgroundBrush}">
+    <!-- DataContext model = MediaSite -->
+    <Grid.Resources>
+      <Model x:Key="ExtendedVideoSkip" Id="8573DBD8-A257-426a-9875-9DB155D32D47"/>
+    </Grid.Resources>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="700"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="200"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Grid x:Name="CurrentSlidePanel" Grid.Row="0" Grid.Column="0" Margin="20">
+      <Image x:Name="CurrentSlideImage" Grid.Row="0" Source="{Binding CurrentSlideURL}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform" />
+    </Grid>
+
+    <Grid x:Name="Video" Grid.Row="0" Grid.Column="1" Margin="20">
+      <Grid.Background>
+        <VideoBrush Stream="0"/>
+      </Grid.Background>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+    </Grid>
+
+    <Grid x:Name="AllSlidesPanel" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+      <ListView x:Name="SlidesListView" Style="{ThemeResource SlidesListViewStyle}" VerticalAlignment="Stretch"
+                ItemsSource="{Binding Path=Slides,Mode=OneTime}">
+        <ListView.Resources>
+          <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
+        </ListView.Resources>
+      </ListView>
+    </Grid>
+
+    <DockPanel x:Name="OSD_LayoutPanel" Grid.Row="2" Grid.Column="0" LastChildFill="false"
+        VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+        IsVisible="{Binding IsOSDVisible}">
+      <Control x:Name="WindowButtons" DockPanel.Dock="Left" HorizontalAlignment="Stretch">
+        <Control.TemplateControl>
+          <Include Source="screens\FSCWindowButtons.inc"/>
+        </Control.TemplateControl>
+      </Control>
+      <DockPanel x:Name="OSD_LeftPanel" DockPanel.Dock="Center" Width="{ThemeResource FullScreenContentVideoPrimaryPlayerOSDWidth}"
+          LastChildFill="false">
+        <mp_special_controls:PlayerControl x:Name="PrimaryOSD" DockPanel.Dock="Bottom"
+            Style="{ThemeResource PrimaryVideoOSDStyle}"
+            VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+      </DockPanel>
+      <!-- OSD_LeftPanel -->
+      <DockPanel x:Name="OSD_RightPanel" DockPanel.Dock="Right" LastChildFill="false">
+        <mp_special_controls:PlayerControl x:Name="SecondaryOSD" DockPanel.Dock="Bottom"
+            Style="{ThemeResource SecondaryMediaOSDStyle}"
+            VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+            AutoVisibility="true"/>
+      </DockPanel>
+      <!-- OSD_RightPanel -->
+    </DockPanel>
+    <!-- OSD_LayoutPanel -->
+  </Grid>
+</Screen>

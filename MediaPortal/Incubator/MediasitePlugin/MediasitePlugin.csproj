@@ -68,6 +68,7 @@
     <Compile Include="EdasMessageRouterSixOneFive.cs" />
     <Compile Include="MediasiteHelper.cs" />
     <Compile Include="Models\MediasitePlugin.cs" />
+    <Compile Include="Models\MediaSiteUIContributor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceProvider\MediaSitePlayer.cs" />
     <Compile Include="ResourceProvider\RawUrlMediaProvider.cs" />
@@ -87,7 +88,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\default\screens\MediasiteMainscreen.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>
@@ -107,6 +107,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\default\themes\default\styles\MediaSiteStyles.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\FullscreenContentMediaSite.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>

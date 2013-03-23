@@ -2,7 +2,7 @@
 <Include
     xmlns="www.team-mediaportal.com/2008/mpf/directx"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Source="screens\master_bare.xaml"
+    Source="screens\master_menu.xaml"
     >
   <Include.Resources>
 
@@ -10,21 +10,23 @@
     <ResourceWrapper x:Key="Header_Text" Resource="[Mediasite.ScreenTitle]"/>
 
     <!-- Contents -->
-    <ControlTemplate x:Key="Client_Template">
+    <ControlTemplate x:Key="Contents_Template">
       <DockPanel LastChildFill="True" Margin="10" Context="{Model Id=89A89847-7523-47CB-9276-4EC544B8F19A}">
         
         <Grid x:Name="PresentationsPanel" DockPanel.Dock="Left" Margin="10,0,0,10" VerticalAlignment="Stretch">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
 
+          <Button Content="[Mediasite.Refresh]" Style="{ThemeResource ButtonWideStyle}" Margin="10" HorizontalAlignment="Right" 
+               Command="{Command RefreshPresentations}"/>
+
           <!-- List of all Presentations -->
-          <ListView x:Name="PresentationListView" Style="{ThemeResource MenuListViewStyle}" VerticalAlignment="Stretch"
+          <ListView x:Name="PresentationListView" Style="{ThemeResource MenuListViewStyle}" VerticalAlignment="Stretch" Grid.Row="1"
             ItemsSource="{Binding Path=Presentations,Mode=OneTime}">
             <ListView.Resources>
               <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
@@ -32,33 +34,6 @@
           </ListView>
         </Grid>
 
-        <!-- Order matters here: The content grid has to be the last control to fill the rest of the space -->
-        <Grid x:Name="ContentPanel" SetFocusPrio="DefaultHigh">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-          </Grid.RowDefinitions>
-
-          <!-- Border is placed as single element here without children, because OpacityMask would apply to them too -->
-          <Border x:Name="SlidesBorder" Grid.Row="0" Grid.Column="0" Margin="10,0,10,10"
-              VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-              BorderBrush="Black" BorderThickness="1" CornerRadius="2">
-
-            <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-              <Button Content="[Mediasite.Refresh]" Style="{ThemeResource ButtonWideStyle}" Margin="10" HorizontalAlignment="Right" 
-               Command="{Command RefreshPresentations}"/>
-
-              <ListView x:Name="SlidesListView" Style="{ThemeResource SlidesListViewStyle}" VerticalAlignment="Stretch"
-                ItemsSource="{Binding Path=Slides,Mode=OneTime}" Background="#60000000" MinHeight="350">
-                <ListView.Resources>
-                  <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
-                </ListView.Resources>
-              </ListView>
-            </StackPanel>
-          </Border>
-        </Grid>
       </DockPanel>
 
     </ControlTemplate>

@@ -12,12 +12,15 @@
   <DataTemplate x:Key="SlideDataTemplate" DataType="{x:Type collections:ListItem}">
     <Grid x:Name="ItemControl" VerticalAlignment="Center" HorizontalAlignment="Stretch">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Image x:Name="SlideImage" Grid.Column="0" Source="{Binding [URL]}" Height="80" Width="120" Stretch="Uniform" />
-      <Label x:Name="ItemLabel" Grid.Column="1" Content="{Binding [Name]}"
-          Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <Image x:Name="SlideImage" Grid.Row="0" Source="{Binding [URL]}" Height="80" Width="120" Stretch="Uniform" />
+      <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding [Name]}"
+          Color="{ThemeResource TextColor}" FontSize="{ThemeResource TinyFontSize}"
           Margin="5,0,0,0"/>
     </Grid>
   </DataTemplate>
@@ -25,6 +28,13 @@
   <!-- SlidesListViewStyle is used for Slides of a Presentation-->
   <Style x:Key="SlidesListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
     <Setter Property="ItemTemplate" Value="{ThemeResource SlideDataTemplate}"/>
+    <Setter Property="ItemsPanel">
+      <Setter.Value>
+        <ItemsPanelTemplate>
+          <StackPanel x:Name="ListItemsHost" IsItemsHost="True" Orientation="Horizontal" HorizontalAlignment="Stretch"/>
+        </ItemsPanelTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
   
 </ResourceDictionary>

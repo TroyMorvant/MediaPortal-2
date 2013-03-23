@@ -1,10 +1,13 @@
-﻿using DirectShowLib;
+﻿using System;
+using DirectShowLib;
 using MediaPortal.UI.Players.Video;
 using MediaPortal.UI.Players.Video.Tools;
+using MediaPortal.UI.Presentation.Players;
+using MediasitePlugin.Models;
 
 namespace MediasitePlugin.ResourceProvider
 {
-  class MediaSitePlayer : VideoPlayer
+  public class MediaSitePlayer : VideoPlayer, IUIContributorPlayer
   {
     public const string MEDIASITE_MIMETYPE = "video/mediasite";
     const string SOURCE_FILTER_NAME = "LAV Splitter Source";
@@ -24,5 +27,14 @@ namespace MediasitePlugin.ResourceProvider
         FilterGraphTools.TryRelease(ref sourceFilter);
       }
     }
+
+    #region IUIContributorPlayer Member
+
+    public Type UIContributorType
+    {
+      get { return typeof(MediaSiteUIContributor); }
+    }
+
+    #endregion
   }
 }
