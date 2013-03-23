@@ -65,8 +65,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EdasMessageRouterSixOneFive.cs" />
+    <Compile Include="MediasiteHelper.cs" />
     <Compile Include="Models\MediasitePlugin.cs" />
-    <Compile Include="EdasMessageRouterSixOneThree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceProvider\MediaSitePlayer.cs" />
     <Compile Include="ResourceProvider\RawUrlMediaProvider.cs" />

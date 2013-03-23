@@ -36,9 +36,9 @@ using MediaPortal.UI.Presentation.DataObjects;
 using MediaPortal.UiComponents.Media.Models;
 using MediasitePlugin.ResourceProvider;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
-using MediasiteAPIConnector;
+
 using System.Collections.Generic;
-using System.ServiceModel;
+
 
 namespace MediasitePlugin
 {
@@ -48,7 +48,6 @@ namespace MediasitePlugin
   public class MediasitePlugin : IWorkflowModel
   {
     #region Consts
-
     private const string API_ENDPOINT = "http://ais.sofodev.com/mediasite/services60/edassixonefive.svc";
     private const string PRIVATE_KEY = "uTBisLe83ZgZExYUYcKkVA==";
     private const string PUBLIC_KEY = "EAJos+ME82eh+rCUA+96tA==";
@@ -56,12 +55,11 @@ namespace MediasitePlugin
     private const string SOFOSITE = "ais.sofodev.com";
     public const string MODEL_ID_STR = "89A89847-7523-47CB-9276-4EC544B8F19A";
     public static Guid MODEL_ID = new Guid(MODEL_ID_STR);
-
+    private MediasiteHelper _msHelper;
     /// <summary>
     /// Another localized string resource.
     /// </summary>
     protected const string COMMAND_TRIGGERED_RESOURCE = "[Mediasite.ButtonTextCommandExecuted]";
-
     #endregion
 
     #region Protected properties
@@ -69,11 +67,10 @@ namespace MediasitePlugin
     /// <summary>
     /// This property holds a string that we will modify in this tutorial.
     /// </summary>
-    protected string _requestTicket;
-    private EdasClient _client;
+   
     private readonly ItemsList _presentations = new ItemsList();
     private readonly ItemsList _slides = new ItemsList();
-    private SiteProperties _siteProperties;
+    
 
     #endregion
 
@@ -113,73 +110,13 @@ namespace MediasitePlugin
       }
     }
 
-
-    /// <summary>
-    /// Refreshes Mediasite system properties
-    /// </summary>
-    public void LoadSiteProperties()
-    {
-      var sitePropertiesResponse = _client.QuerySiteProperties(new QuerySitePropertiesRequest
-        {
-          Ticket = _requestTicket,
-          ApplicationName = APPLICATION
-        });
-
-      if (sitePropertiesResponse != null)
-      {
-        _siteProperties = sitePropertiesResponse.Properties;
-      }
-    }
-
-    /// <summary>
-    /// Returns an Authentication Ticket that is used to authorize the user to view the selected resource.
-    /// </summary>
-    public string CreateAuthTicket(string mediasiteResourceID)
-    {
-      var aRequest = new CreateAuthTicketRequest { ApplicationName = APPLICATION, Ticket = _requestTicket, TicketSettings = new CreateAuthTicketSettings { Username = "MediaPortal2User", ResourceId = mediasiteResourceID, MinutesToLive = 10 } };
-      return _client.CreateAuthTicket(aRequest).AuthTicketId;
-    }
-
-    /// <summary>
-    /// Initializes the Mediasite API Client
-    /// </summary>
-    public void InitClient()
-    {
-      _requestTicket = new APIAuthenticator(API_ENDPOINT, PUBLIC_KEY, PRIVATE_KEY).RequestTicket;
-      var binding = new BasicHttpBinding
-      {
-        ReceiveTimeout = new TimeSpan(0, 5, 0),
-        SendTimeout = new TimeSpan(0, 5, 0),
-        MaxBufferPoolSize = 2147483647,
-        MaxBufferSize = 2147483647,
-        MaxReceivedMessageSize = 2147483647,
-        HostNameComparisonMode = HostNameComparisonMode.StrongWildcard,
-
-      };
-      binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
-      binding.Security.Mode = API_ENDPOINT.Substring(0, 5) == "https" ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None;
-
-      EndpointAddress endpoint = new EndpointAddress(new Uri(API_ENDPOINT, UriKind.Absolute));
-      _client = new EdasClient(binding, endpoint);
-      LoadSiteProperties();
-    }
-
     /// <summary>
     /// Refreshes the contents of <see cref="Presentations"/> list.
     /// </summary>
     public void RefreshPresentations()
     {
-      var pRequest = new QueryPresentationsByCriteriaRequest
-        {
-          Ticket = _requestTicket,
-          ApplicationName = APPLICATION,
-          QueryCriteria = new PresentationQueryCriteria { StartDate = Convert.ToDateTime("01/01/00"), EndDate = DateTime.Now, PermissionMask = ResourcePermissionMask.Read },
-          Options = new QueryOptions { BatchSize = 100, StartIndex = 0 }
-        };
-
       _presentations.Clear();
-      var tpresentations = _client.QueryPresentationsByCriteria(pRequest);
-      foreach (PresentationDetails presentation in tpresentations.Presentations)
+      foreach (PresentationDetails presentation in _msHelper.Presentations)
       {
         ListItem item = new ListItem("Name", presentation.Name);
         PresentationDetails localPresentation = presentation; // Keep local variable to avoid changing values in iterations
@@ -189,31 +126,13 @@ namespace MediasitePlugin
       _presentations.FireChange();
     }
 
-    private PresentationContentDetails GetMP4Content(IEnumerable<PresentationContentDetails> contents)
-    {
-      return contents.FirstOrDefault(content => content.ContentMimeType == "video/mp4");
-    }
-
-    private PresentationContentDetails GetSlideContent(IEnumerable<PresentationContentDetails> contents)
-    {
-      return contents.FirstOrDefault(content => content.ContentType == PresentationContentTypeDetails.Slides);
-    }
-
     private void LoadSlides(PresentationDetails presentation)
     {
-      var slides = _client.QuerySlides(new QuerySlidesRequest
-      {
-        PresentationId = presentation.Id,
-        Ticket = _requestTicket,
-        ApplicationName = APPLICATION,
-        StartIndex = 0,
-        Count = presentation.SlideCount
-      });
       _slides.Clear();
-      foreach (SlideDetails slide in slides.Slides)
+      foreach (SlideDetails slide in _msHelper.LoadSlides(presentation))
       {
-        string url = presentation.FileServerUrl.ToLower().Replace(_siteProperties.Name.ToLower(), "Public") + @"/" +
-          presentation.Id + @"/" + String.Format(presentation.Content[0].FileNameWithExtension, slide.Number.ToString("D" + 4));
+        string url = presentation.FileServerUrl.ToLower().Replace(_msHelper.SiteName, "Public") + @"/" +
+          presentation.Id + @"/" + String.Format(_msHelper.GetSlideContent(presentation.Content).FileNameWithExtension, slide.Number.ToString("D" + 4));
 
         string title = slide.Title;
         if (string.IsNullOrWhiteSpace(title))
@@ -245,8 +164,6 @@ namespace MediasitePlugin
     {
       LoadSlides(presentation);
 
-      string videoURL = presentation.VideoUrl.Replace("$$NAME$$", GetMP4Content(presentation.Content).FileNameWithExtension).Replace("$$PBT$$", CreateAuthTicket(presentation.Id)).Replace("$$SITE$$", SOFOSITE);
-
       IDictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
 
       MediaItemAspect providerResourceAspect;
@@ -256,7 +173,7 @@ namespace MediasitePlugin
       MediaItemAspect videoAspect;
       aspects[VideoAspect.ASPECT_ID] = videoAspect = new MediaItemAspect(VideoAspect.Metadata);
 
-      providerResourceAspect.SetAttribute(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH, RawUrlMediaProvider.ToProviderResourcePath(videoURL).Serialize());
+      providerResourceAspect.SetAttribute(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH, RawUrlMediaProvider.ToProviderResourcePath(presentation.VideoUrl).Serialize());
       providerResourceAspect.SetAttribute(ProviderResourceAspect.ATTR_SYSTEM_ID, ServiceRegistration.Get<ISystemResolver>().LocalSystemId);
 
       mediaAspect.SetAttribute(MediaAspect.ATTR_MIME_TYPE, MediaSitePlayer.MEDIASITE_MIMETYPE);
@@ -284,7 +201,7 @@ namespace MediasitePlugin
 
     public void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
-      InitClient();
+      _msHelper = new MediasiteHelper(API_ENDPOINT,PRIVATE_KEY,PUBLIC_KEY,APPLICATION,SOFOSITE);
       RefreshPresentations();
     }
 
