@@ -37,5 +37,15 @@
       SourceStates="7F702D9C-F2DD-42da-9ED8-0BA92F07787F"
       TargetState="23DB4E53-EB0D-4315-9F4C-F5E1C13577C7"
       DisplayTitle="[MediaSite.MenuEntry]"/>
+
+    <MethodCallAction Id="7AEB11DE-BA40-40a2-933A-B00BBD151B08"
+        Name="MediaSite-Refresh"
+        DisplayCategory="b-Refresh"
+        SortOrder="b"
+        DisplayTitle="[Mediasite.Refresh]"
+        SourceStates="23DB4E53-EB0D-4315-9F4C-F5E1C13577C7"
+        ModelId="89A89847-7523-47CB-9276-4EC544B8F19A"
+        MethodName="RefreshPresentations"/>    <!-- Model = MediaSiteModel -->
+
   </MenuActions>
 </Workflow>

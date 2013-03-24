@@ -12,28 +12,13 @@
     <!-- Contents -->
     <ControlTemplate x:Key="Contents_Template">
       <DockPanel LastChildFill="True" Margin="10" Context="{Model Id=89A89847-7523-47CB-9276-4EC544B8F19A}">
-        
-        <Grid x:Name="PresentationsPanel" DockPanel.Dock="Left" Margin="10,0,0,10" VerticalAlignment="Stretch">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-          </Grid.RowDefinitions>
-
-          <Button Content="[Mediasite.Refresh]" Style="{ThemeResource ButtonWideStyle}" Margin="10" HorizontalAlignment="Right" 
-               Command="{Command RefreshPresentations}"/>
-
-          <!-- List of all Presentations -->
-          <ListView x:Name="PresentationListView" Style="{ThemeResource MenuListViewStyle}" VerticalAlignment="Stretch" Grid.Row="1"
-            ItemsSource="{Binding Path=Presentations,Mode=OneTime}">
-            <ListView.Resources>
-              <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
-            </ListView.Resources>
-          </ListView>
-        </Grid>
-
+        <!-- List of all Presentations -->
+        <ListView x:Name="PresentationListView" Style="{ThemeResource MenuListViewStyle}" VerticalAlignment="Stretch" DockPanel.Dock="Center"
+          ItemsSource="{Binding Path=Presentations,Mode=OneTime}">
+          <ListView.Resources>
+            <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
+          </ListView.Resources>
+        </ListView>
       </DockPanel>
 
     </ControlTemplate>
