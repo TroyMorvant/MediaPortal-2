@@ -6,23 +6,26 @@ using System.ServiceModel;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
 using MediasiteAPIConnector;
 using MediaPortal.Common.Commands;
+using System.Xml;
+using System.Xml.XPath;
 
 namespace MediasitePlugin
 {
   public class MediasiteHelper
   {
     protected string _requestTicket;
-    private EdasClient _client;
-    private SiteProperties _siteProperties;
-    private string _applicationName;
-    private string _apiEndpoint;
-    private string _privateKey;
-    private string _publicKey;
-    private string _sofoSite;
+    EdasClient _client;
+    SiteProperties _siteProperties;
+    string _applicationName;
+    string _apiEndpoint;
+    string _privateKey;
+    string _publicKey;
+    string _sofoSite;
 
-    private PresentationDetails[] _presentations;
-    private SlideContentDetails[] _slides;
-   
+    //PresentationDetails[] _presentations;
+    SlideContentDetails[] _slides;
+    List<CategoryCollection> _categories = new List<CategoryCollection>();
+
     public MediasiteHelper(string APIEndpoint, string PrivateKey, string Publickey, string ApplicationName, string SOFOSite)
     {
       _apiEndpoint = APIEndpoint;
@@ -33,17 +36,18 @@ namespace MediasitePlugin
 
       InitClient();
       LoadSiteProperties();
-      LoadPresentations();
+      //LoadPresentations();
+      LoadCategoryCollection();
     }
 
     /// <summary>
     /// returns an array of PresentationDetails
     /// </summary>
-    public PresentationDetails[] Presentations
+    public List<CategoryCollection> LectureCollection
     {
       get
       {
-        return _presentations;
+        return _categories;
       }
     }
     public string SiteName
@@ -53,6 +57,7 @@ namespace MediasitePlugin
         return _siteProperties.Name.ToLower();
       }
     }
+    
 
     /// <summary>
     /// Refreshes Mediasite system properties
@@ -107,6 +112,7 @@ namespace MediasitePlugin
     /// <summary>
     /// Populates object with presentation array
     /// </summary>
+    /*
     public void LoadPresentations()
     {
       var pRequest = new QueryPresentationsByCriteriaRequest
@@ -128,6 +134,55 @@ namespace MediasitePlugin
         _presentations = tpresentations.Presentations;
       }
     }
+     */
+
+    /// <summary>
+    /// Populates object with array of presentations where the value of the key "CategoryName" = value
+    /// </summary>
+    public void LoadCategoryCollection()
+    {
+      XPathDocument document = new XPathDocument(@"Plugins\mediasitePlugin\CategoryDefinition.xml");
+      XPathNavigator navigator = document.CreateNavigator();
+      XPathNodeIterator nodes = navigator.Select("/Categories/Category");
+
+      foreach (XPathNavigator item in nodes)
+      {
+        var _name = item.GetAttribute("Name", "");
+        var _iconPath = item.GetAttribute("IconPath", "");
+        var _bannerPath = item.GetAttribute("BannerPath", "");
+
+        CategoryCollection _collection = new CategoryCollection();
+        _collection.CategoryName = _name;
+        _collection.IconPath = _iconPath;
+        _collection.BannerPath = _bannerPath;
+
+        var _pResponse = _client.QueryMediasiteKeyValuesByCriteria(new QueryMediasiteKeyValuesByCriteriaRequest() { Key = "CategoryName", Value = _collection.CategoryName, Ticket = _requestTicket, ApplicationName = _applicationName });
+
+        List<PresentationDetails> _tPresList = new List<PresentationDetails>();
+        if (_pResponse.KeyValues.Length > 0)
+        {
+          string[] pIDList = new string[_pResponse.KeyValues.Length];
+
+          for (int i = 0; i < _pResponse.KeyValues.Length; i++)
+          {
+            pIDList[i] = _pResponse.KeyValues[i].Id;
+          }
+          var tpresentations = _client.QueryPresentationsById(new QueryPresentationsByIdRequest() { PresentationIdList = pIDList, ApplicationName = _applicationName, Ticket = _requestTicket, IncludeKeyValues = true });
+          if (tpresentations.Presentations != null)
+          {
+            foreach (PresentationDetails _pres in tpresentations.Presentations)
+            {
+              _pres.VideoUrl = _pres.VideoUrl.Replace("$$NAME$$", GetMP4Content(_pres.Content).FileNameWithExtension).Replace("$$PBT$$", CreateAuthTicket(_pres.Id)).Replace("$$SITE$$", _sofoSite);
+            }
+           
+            _collection.Presentations = tpresentations.Presentations;
+            _categories.Add(_collection);
+          }
+
+        }
+      }
+    }
+
 
     /// <summary>
     /// Returns an array of SlideDetails for a given presentation
@@ -169,5 +224,17 @@ namespace MediasitePlugin
       return presentation.FileServerUrl.ToLower().Replace(SiteName, "Public") + @"/" +
           presentation.Id + @"/" + String.Format(GetSlideContent(presentation.Content).FileNameWithExtension, slide.Number.ToString("D" + 4));
     }
+
+   public struct CategoryCollection
+   {
+     public string CategoryName;
+     public string IconPath;
+     public string BannerPath;
+     public PresentationDetails[] Presentations;
+
+   }
+
   }
+  
 }
+

@@ -37,6 +37,7 @@ using MediaPortal.UI.Presentation.DataObjects;
 using MediaPortal.UiComponents.Media.Models;
 using MediasitePlugin.ResourceProvider;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
+using MediasitePlugin;
 
 using System.Collections.Generic;
 
@@ -56,6 +57,7 @@ namespace MediasitePlugin
     private const string SOFOSITE = "ais.sofodev.com";
     public const string MODEL_ID_STR = "89A89847-7523-47CB-9276-4EC544B8F19A";
     public static Guid MODEL_ID = new Guid(MODEL_ID_STR);
+    
 
     #endregion
 
@@ -71,6 +73,9 @@ namespace MediasitePlugin
     protected SlideDetails[] _slideDetails;
     protected PresentationDetails _currentPresentation;
     protected AbstractProperty _currentSlideURLProperty;
+    protected string _iconPath;
+    protected string _bannerPath;
+    protected string _categoryName;
 
     #endregion
 
@@ -127,14 +132,22 @@ namespace MediasitePlugin
     public void RefreshPresentations()
     {
       _presentations.Clear();
-      foreach (PresentationDetails presentation in _msHelper.Presentations)
+      //iterate through the new lecture struct so that you have access to the Category Name, Icon Path, Banner Path (fanart)
+      foreach (MediasiteHelper.CategoryCollection _item in _msHelper.LectureCollection)
       {
-        ListItem item = new ListItem("Name", presentation.Name);
-        PresentationDetails localPresentation = presentation; // Keep local variable to avoid changing values in iterations
-        item.Command = new MethodDelegateCommand(() => PlayVideo(localPresentation));
-        _presentations.Add(item);
+        _categoryName = _item.CategoryName;
+        _iconPath = _item.IconPath;
+        _bannerPath = _item.BannerPath;
+
+        foreach (PresentationDetails presentation in _item.Presentations)
+        {
+          ListItem item = new ListItem("Name", presentation.Name);
+          PresentationDetails localPresentation = presentation; // Keep local variable to avoid changing values in iterations
+          item.Command = new MethodDelegateCommand(() => PlayVideo(localPresentation));
+          _presentations.Add(item);
+        }
+        _presentations.FireChange();
       }
-      _presentations.FireChange();
     }
 
     private void LoadSlides(PresentationDetails presentation)

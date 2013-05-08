@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Categories>
+  <Category Name="Math" IconPath="http://files.softicons.com/download/system-icons/windows-8-metro-icons-by-dakirby309/png/512x512/Applications/Calculator.png" BannerPath="http://www.math.siu.edu/Images/chalkboardheader.jpg" KeyWord="Math"/>
+  <Category Name="Physics" IconPath="http://www.engr.ku.edu/departments/dept_icons/physx_icon_sm.png" BannerPath="http://www.science.uq.edu.au/images/careers/header-physics.jpg" KeyWord="Physics" />
+  <Category Name="Chemistry" IconPath="http://cyfallshs.com/wp-content/uploads/119768-matte-grey-square-icon-signs-love-potion.png" BannerPath="http://www.oliveoilsource.com/files/category_pictures/Olive_Chem_header.jpg" KeyWord="Chemistry" />
+</Categories>

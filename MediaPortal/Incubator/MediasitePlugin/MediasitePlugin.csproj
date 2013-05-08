@@ -65,7 +65,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Category.cs" />
     <Compile Include="EdasMessageRouterSixOneFive.cs" />
+    <Compile Include="LectureCollection.cs" />
     <Compile Include="MediasiteHelper.cs" />
     <Compile Include="Models\MediasitePlugin.cs" />
     <Compile Include="Models\MediaSiteUIContributor.cs" />
@@ -75,6 +77,7 @@
     <Compile Include="ResourceProvider\RawUrlResourceAccessor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CategoryDefinition.xml" />
     <Content Include="External Assemblies\EDAS60.Client.dll" />
     <Content Include="External Assemblies\MediasiteAPIConnector.dll" />
     <Content Include="Language\strings_en.xml">
