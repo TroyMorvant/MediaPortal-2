@@ -27,14 +27,16 @@
   </Register>
 
   <Register Location="/Models">
-    <Model Id="89A89847-7523-47CB-9276-4EC544B8F19A" ClassName="MediasitePlugin.MediasitePlugin"/>
+    <Model Id="89A89847-7523-47CB-9276-4EC544B8F19A" ClassName="MediasitePlugin.Models.MediasitePlugin"/>
   </Register>
 
   <Register Location="/Workflow/States">
     <WorkflowState Id="23DB4E53-EB0D-4315-9F4C-F5E1C13577C7"
-    Name="MediasiteMain" MainScreen="MediasiteMainscreen"
-    DisplayLabel="[Mediasite.StateDisplayLabel]" WorkflowModel="89A89847-7523-47CB-9276-4EC544B8F19A"/>
-    <!-- No workflow model -->
+      Name="MediasiteCategories" MainScreen="MediasiteCategories"
+      DisplayLabel="[Mediasite.CategoriesDisplayLabel]" WorkflowModel="89A89847-7523-47CB-9276-4EC544B8F19A"/>
+    <WorkflowState Id="4332F0ED-45FE-4845-BE08-C429E0137579"
+      Name="MediasitePresentations" MainScreen="MediasitePresentations"
+      DisplayLabel="[Mediasite.PresentationsDisplayLabel]" WorkflowModel="89A89847-7523-47CB-9276-4EC544B8F19A"/>
   </Register>
   <Register Location="/Resources/Skin">
     <Resource Id="Mediasite" Directory="Skin" Type="Skin"/>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.ServiceModel;
+using MediasitePlugin.Items;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
 using MediasiteAPIConnector;
 using MediaPortal.Common.Commands;
@@ -57,14 +58,14 @@ namespace MediasitePlugin
         return _siteProperties.Name.ToLower();
       }
     }
-    
+
 
     /// <summary>
     /// Refreshes Mediasite system properties
     /// </summary>
     public void LoadSiteProperties()
     {
-      
+
       var sitePropertiesResponse = _client.QuerySiteProperties(new QuerySitePropertiesRequest
       {
         Ticket = _requestTicket,
@@ -174,7 +175,7 @@ namespace MediasitePlugin
             {
               _pres.VideoUrl = _pres.VideoUrl.Replace("$$NAME$$", GetMP4Content(_pres.Content).FileNameWithExtension).Replace("$$PBT$$", CreateAuthTicket(_pres.Id)).Replace("$$SITE$$", _sofoSite);
             }
-           
+
             _collection.Presentations = tpresentations.Presentations;
             _categories.Add(_collection);
           }
@@ -224,17 +225,6 @@ namespace MediasitePlugin
       return presentation.FileServerUrl.ToLower().Replace(SiteName, "Public") + @"/" +
           presentation.Id + @"/" + String.Format(GetSlideContent(presentation.Content).FileNameWithExtension, slide.Number.ToString("D" + 4));
     }
-
-   public struct CategoryCollection
-   {
-     public string CategoryName;
-     public string IconPath;
-     public string BannerPath;
-     public PresentationDetails[] Presentations;
-
-   }
-
   }
-  
 }
 

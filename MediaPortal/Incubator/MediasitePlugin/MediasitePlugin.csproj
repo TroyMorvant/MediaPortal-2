@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Items\CategoryCollection.cs" />
     <Compile Include="EdasMessageRouterSixOneFive.cs" />
     <Compile Include="MediasiteHelper.cs" />
     <Compile Include="Models\MediasitePlugin.cs" />
@@ -88,11 +89,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Skin\default\screens\MediasiteMainscreen.xaml">
-      <SubType>Designer</SubType>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\UI\Players\VideoPlayer\VideoPlayers.csproj">
@@ -125,6 +121,16 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\Reflexion\screens\FullscreenContentMediaSite.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\MediaSiteCategories.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\MediaSitePresentations.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>

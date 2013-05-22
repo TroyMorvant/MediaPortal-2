@@ -35,44 +35,43 @@ using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Presentation.DataObjects;
 using MediaPortal.UiComponents.Media.Models;
+using MediasitePlugin.Items;
 using MediasitePlugin.ResourceProvider;
 using www.sonicfoundry.com.Mediasite.Services60.Messages;
-using MediasitePlugin;
-
 using System.Collections.Generic;
 
-
-namespace MediasitePlugin
+namespace MediasitePlugin.Models
 {
   /// <summary>
-  /// Todo: Add comments.
+  /// Todo: Add comments. Add settings for list of sites/connection details
   /// </summary>
   public class MediasitePlugin : BaseTimerControlledModel, IWorkflowModel
   {
     #region Consts
+
     private const string API_ENDPOINT = "http://ais.sofodev.com/mediasite/services60/edassixonefive.svc";
     private const string PRIVATE_KEY = "uTBisLe83ZgZExYUYcKkVA==";
     private const string PUBLIC_KEY = "EAJos+ME82eh+rCUA+96tA==";
     private const string APPLICATION = "MediaPortal2";
     private const string SOFOSITE = "ais.sofodev.com";
+
     public const string MODEL_ID_STR = "89A89847-7523-47CB-9276-4EC544B8F19A";
     public static Guid MODEL_ID = new Guid(MODEL_ID_STR);
-    
+    public static Guid WF_CATEGORIES = new Guid("23DB4E53-EB0D-4315-9F4C-F5E1C13577C7");
+    public static Guid WF_PRESENTATIONS = new Guid("4332F0ED-45FE-4845-BE08-C429E0137579");
 
     #endregion
 
     #region Protected properties
 
-    /// <summary>
-    /// This property holds a string that we will modify in this tutorial.
-    /// </summary>
-
     protected MediasiteHelper _msHelper;
     protected readonly ItemsList _presentations = new ItemsList();
     protected readonly ItemsList _slides = new ItemsList();
+    protected readonly ItemsList _categories = new ItemsList();
     protected SlideDetails[] _slideDetails;
     protected PresentationDetails _currentPresentation;
     protected AbstractProperty _currentSlideURLProperty;
+    protected AbstractProperty _currentCategoryProperty;
     protected string _iconPath;
     protected string _bannerPath;
     protected string _categoryName;
@@ -85,14 +84,28 @@ namespace MediasitePlugin
     /// Constructor... this one is called by the WorkflowManager when this model is loaded due to a screen reference.
     /// </summary>
     public MediasitePlugin()
-      :base(false, 500)
+      : base(false, 500)
     {
       _currentSlideURLProperty = new WProperty(typeof(String), string.Empty);
+      _currentCategoryProperty = new WProperty(typeof(CategoryCollection), null);
+      _currentCategoryProperty.Attach(CategoryChanged);
     }
 
     #endregion
 
     #region Public members
+
+    /// <summary>
+    /// Gets an ItemList of all Categories.
+    /// </summary>
+    /// 
+    public ItemsList Categories
+    {
+      get
+      {
+        return _categories;
+      }
+    }
 
     /// <summary>
     /// Gets an ItemList of all Presentations.
@@ -105,6 +118,7 @@ namespace MediasitePlugin
         return _presentations;
       }
     }
+
     /// <summary>
     /// Gets an ItemList of slides for current selected Presentation.
     /// </summary>
@@ -121,9 +135,20 @@ namespace MediasitePlugin
       get { return (string) _currentSlideURLProperty.GetValue(); }
       set { _currentSlideURLProperty.SetValue(value); }
     }
+
     public AbstractProperty CurrentSlideURLProperty
     {
       get { return _currentSlideURLProperty; }
+    }
+
+    public CategoryCollection CurrentCategory
+    {
+      get { return (CategoryCollection) _currentCategoryProperty.GetValue(); }
+      set { _currentCategoryProperty.SetValue(value); }
+    }
+    public AbstractProperty CurrentCategoryProperty
+    {
+      get { return _currentCategoryProperty; }
     }
 
     /// <summary>
@@ -132,22 +157,58 @@ namespace MediasitePlugin
     public void RefreshPresentations()
     {
       _presentations.Clear();
-      //iterate through the new lecture struct so that you have access to the Category Name, Icon Path, Banner Path (fanart)
-      foreach (MediasiteHelper.CategoryCollection _item in _msHelper.LectureCollection)
+      CategoryCollection categoryCollection = CurrentCategory;
+      if (categoryCollection != null)
       {
-        _categoryName = _item.CategoryName;
-        _iconPath = _item.IconPath;
-        _bannerPath = _item.BannerPath;
-
-        foreach (PresentationDetails presentation in _item.Presentations)
+        foreach (PresentationDetails presentation in categoryCollection.Presentations)
         {
           ListItem item = new ListItem("Name", presentation.Name);
-          PresentationDetails localPresentation = presentation; // Keep local variable to avoid changing values in iterations
+          PresentationDetails localPresentation = presentation;
+          // Keep local variable to avoid changing values in iterations
           item.Command = new MethodDelegateCommand(() => PlayVideo(localPresentation));
           _presentations.Add(item);
         }
-        _presentations.FireChange();
+        _categoryName = categoryCollection.CategoryName;
+        _iconPath = categoryCollection.IconPath;
+        _bannerPath = categoryCollection.BannerPath;
       }
+      _presentations.FireChange();
+    }
+
+    /// <summary>
+    /// Refreshes the contents of <see cref="Categories"/> list.
+    /// </summary>
+    public void RefreshCategories()
+    {
+      // Iterate through the new lecture struct so that you have access to the Category Name, Icon Path, Banner Path (fanart)
+      _categories.Clear();
+      foreach (CategoryCollection categoryCollection in _msHelper.LectureCollection)
+      {
+        CategoryCollection localCollection = categoryCollection;
+        categoryCollection.Command = new MethodDelegateCommand(() => SelectCategory(localCollection));
+        _categories.Add(categoryCollection);
+      }
+      _categories.FireChange();
+    }
+
+
+    private void CategoryChanged(AbstractProperty property, object oldvalue)
+    {
+      RefreshPresentations();
+    }
+
+    public void SelectCategory(CategoryCollection category)
+    {
+      CurrentCategory = category;
+      IWorkflowManager workflowManager = ServiceRegistration.Get<IWorkflowManager>();
+      if (category == null)
+        return;
+
+      // if previously in videos state - pop that state off the stack
+      if (workflowManager.NavigationContextStack.Peek().WorkflowState.StateId == WF_PRESENTATIONS)
+        workflowManager.NavigationContextStack.Pop();
+
+      workflowManager.NavigatePushAsync(WF_PRESENTATIONS, new NavigationContextConfig { NavigationContextDisplayLabel = category.CategoryName });
     }
 
     private void LoadSlides(PresentationDetails presentation)
@@ -176,7 +237,7 @@ namespace MediasitePlugin
       MediaSitePlayer mediaSitePlayer = GetMediaSitePlayer();
       if (mediaSitePlayer == null)
         return;
-      
+
       TimeSpan currentPlayerTime = mediaSitePlayer.CurrentTime;
       var currentSlide = _slideDetails.LastOrDefault(slide => TimeSpan.FromMilliseconds(slide.Time) < currentPlayerTime);
       if (currentSlide != null)
@@ -195,7 +256,7 @@ namespace MediasitePlugin
     protected void ShowSlide(SlideDetails slide)
     {
       MediaSitePlayer mediaSitePlayer = GetMediaSitePlayer();
-      if (mediaSitePlayer ==  null)
+      if (mediaSitePlayer == null)
         return;
       mediaSitePlayer.CurrentTime = TimeSpan.FromMilliseconds(slide.Time);
     }
@@ -243,8 +304,8 @@ namespace MediasitePlugin
 
     public void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
-      _msHelper = new MediasiteHelper(API_ENDPOINT,PRIVATE_KEY,PUBLIC_KEY,APPLICATION,SOFOSITE);
-      RefreshPresentations();
+      _msHelper = new MediasiteHelper(API_ENDPOINT, PRIVATE_KEY, PUBLIC_KEY, APPLICATION, SOFOSITE);
+      RefreshCategories();
       StartTimer();
     }
 
@@ -256,6 +317,10 @@ namespace MediasitePlugin
     public void ChangeModelContext(NavigationContext oldContext, NavigationContext newContext, bool push)
     {
       // We could initialize some data here when changing the media navigation state
+      if (newContext.WorkflowState.StateId == WF_PRESENTATIONS)
+      {
+        RefreshPresentations();
+      }
     }
 
     public void Deactivate(NavigationContext oldContext, NavigationContext newContext)

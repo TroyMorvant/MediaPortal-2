@@ -8,7 +8,35 @@
   <!-- MediaSite model -->
   <Model x:Key="MediaSiteModel" Id="89A89847-7523-47CB-9276-4EC544B8F19A"/>
 
-  <!-- SingleChannel Program Guide, Item contains StartTime and Title. -->
+  <DataTemplate x:Key="CategoryDataTemplate" DataType="{x:Type collections:ListItem}">
+    <Grid x:Name="ItemControl" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <Image x:Name="IconImage" Grid.Row="0" Source="{Binding IconPath}" Height="200" Width="200" Stretch="Uniform"/>
+      <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding CategoryName}" HorizontalAlignment="Center"
+          Color="{ThemeResource TextColor}" FontSize="{ThemeResource TinyFontSize}"
+          Margin="5"/>
+    </Grid>
+  </DataTemplate>
+  
+  <!-- SlidesListViewStyle is used for Slides of a Presentation-->
+  <Style x:Key="CategoryListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
+    <Setter Property="ItemTemplate" Value="{ThemeResource CategoryDataTemplate}"/>
+    <Setter Property="ItemsPanel">
+      <Setter.Value>
+        <ItemsPanelTemplate>
+          <WrapPanel x:Name="ListItemsHost" IsItemsHost="True" HorizontalAlignment="Stretch"/>
+        </ItemsPanelTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- SlideDataTemplate. -->
   <DataTemplate x:Key="SlideDataTemplate" DataType="{x:Type collections:ListItem}">
     <Grid x:Name="ItemControl" VerticalAlignment="Center" HorizontalAlignment="Stretch">
       <Grid.ColumnDefinitions>
