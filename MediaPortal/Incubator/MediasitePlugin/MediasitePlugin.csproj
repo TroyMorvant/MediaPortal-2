@@ -65,9 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Category.cs" />
     <Compile Include="EdasMessageRouterSixOneFive.cs" />
-    <Compile Include="LectureCollection.cs" />
     <Compile Include="MediasiteHelper.cs" />
     <Compile Include="Models\MediasitePlugin.cs" />
     <Compile Include="Models\MediaSiteUIContributor.cs" />
@@ -77,7 +75,9 @@
     <Compile Include="ResourceProvider\RawUrlResourceAccessor.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="CategoryDefinition.xml" />
+    <Content Include="CategoryDefinition.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="External Assemblies\EDAS60.Client.dll" />
     <Content Include="External Assemblies\MediasiteAPIConnector.dll" />
     <Content Include="Language\strings_en.xml">
@@ -137,7 +137,8 @@ mkdir "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Skin
 robocopy "$(ProjectDir)Skin" "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Skin" /MIR
 xcopy /Y "$(TargetDir)$(ProjectName).dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
 xcopy /Y "$(TargetDir)EDAS60.Client.dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
-xcopy /Y "$(TargetDir)MediasiteAPIConnector.dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"</PostBuildEvent>
+xcopy /Y "$(TargetDir)MediasiteAPIConnector.dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
+xcopy /Y "$(TargetDir)CategoryDefinition.xml"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
