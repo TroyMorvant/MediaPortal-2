@@ -387,8 +387,11 @@ namespace MediasitePlugin.Models
 
     public void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
     {
-      _msHelper = new MediasiteHelper(API_ENDPOINT, PRIVATE_KEY, PUBLIC_KEY, APPLICATION, SOFOSITE);
-      RefreshCategories();
+      if (_msHelper == null)
+      {
+        _msHelper = new MediasiteHelper(API_ENDPOINT, PRIVATE_KEY, PUBLIC_KEY, APPLICATION, SOFOSITE);
+        RefreshCategories();
+      }
       StartTimer();
     }
 
