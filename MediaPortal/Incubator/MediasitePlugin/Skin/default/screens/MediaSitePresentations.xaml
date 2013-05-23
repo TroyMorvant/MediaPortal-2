@@ -25,10 +25,18 @@
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
 
-          <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Image Source="{Binding PresenterUrl}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DockPanel.Dock="Center"/>
-            <Label Content="{Binding PresenterName}" Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallerFontSize}" DockPanel.Dock="Bottom"/>
-          </DockPanel>
+          <Grid DockPanel.Dock="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            
+            <Image HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Uniform"
+                Source="{Binding PresenterUrl}"
+                FallbackSource="user.png" />
+
+            <Label Grid.Row="1" HorizontalAlignment="Center" Content="{Binding PresenterName}" Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallerFontSize}" />
+          </Grid>
 
           <Label Grid.Column="1" Content="{Binding PresentationDescription}" Color="{ThemeResource TextColor}"/>
 
