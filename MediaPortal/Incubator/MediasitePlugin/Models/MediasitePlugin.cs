@@ -59,6 +59,7 @@ namespace MediasitePlugin.Models
     public static Guid MODEL_ID = new Guid(MODEL_ID_STR);
     public static Guid WF_CATEGORIES = new Guid("23DB4E53-EB0D-4315-9F4C-F5E1C13577C7");
     public static Guid WF_PRESENTATIONS = new Guid("4332F0ED-45FE-4845-BE08-C429E0137579");
+    public const string KEY_PRESENTATION = "Presentation";
 
     #endregion
 
@@ -72,6 +73,10 @@ namespace MediasitePlugin.Models
     protected PresentationDetails _currentPresentation;
     protected AbstractProperty _currentSlideURLProperty;
     protected AbstractProperty _currentCategoryProperty;
+    protected AbstractProperty _currentPresentationProperty;
+    protected AbstractProperty _presenterUrlProperty;
+    protected AbstractProperty _presenterNameProperty;
+    protected AbstractProperty _presentationDescriptionProperty;
     protected string _iconPath;
     protected string _bannerPath;
     protected string _categoryName;
@@ -88,7 +93,12 @@ namespace MediasitePlugin.Models
     {
       _currentSlideURLProperty = new WProperty(typeof(String), string.Empty);
       _currentCategoryProperty = new WProperty(typeof(CategoryCollection), null);
+      _currentPresentationProperty = new WProperty(typeof(PresentationDetails), null);
+      _presenterUrlProperty = new WProperty(typeof(string), null);
+      _presenterNameProperty = new WProperty(typeof(string), null);
+      _presentationDescriptionProperty = new WProperty(typeof(string), null);
       _currentCategoryProperty.Attach(CategoryChanged);
+      _currentPresentationProperty.Attach(PresentationChanged);
     }
 
     #endregion
@@ -146,9 +156,67 @@ namespace MediasitePlugin.Models
       get { return (CategoryCollection) _currentCategoryProperty.GetValue(); }
       set { _currentCategoryProperty.SetValue(value); }
     }
+
     public AbstractProperty CurrentCategoryProperty
     {
       get { return _currentCategoryProperty; }
+    }
+
+    public AbstractProperty CurrentPresentationProperty
+    {
+      get { return _currentPresentationProperty; }
+    }
+
+    public PresentationDetails CurrentPresentation
+    {
+      get { return (PresentationDetails) _currentPresentationProperty.GetValue(); }
+      set { _currentPresentationProperty.SetValue(value); }
+    }
+
+    public AbstractProperty PresenterUrlProperty
+    {
+      get { return _presenterUrlProperty; }
+    }
+
+    public string PresenterUrl
+    {
+      get { return (string) _presenterUrlProperty.GetValue(); }
+      set { _presenterUrlProperty.SetValue(value); }
+    }
+
+    public AbstractProperty PresenterNameProperty
+    {
+      get { return _presenterNameProperty; }
+    }
+
+    public string PresenterName
+    {
+      get { return (string) _presenterNameProperty.GetValue(); }
+      set { _presenterNameProperty.SetValue(value); }
+    }
+
+    public AbstractProperty PresentationDescriptionProperty
+    {
+      get { return _presentationDescriptionProperty; }
+    }
+
+    public string PresentationDescription
+    {
+      get { return (string) _presentationDescriptionProperty.GetValue(); }
+      set { _presentationDescriptionProperty.SetValue(value); }
+    }
+
+    public void SetSelectedItem(ListItem item)
+    {
+      object odetails;
+      if (item == null || !item.AdditionalProperties.TryGetValue(KEY_PRESENTATION, out odetails))
+        return;
+
+      PresentationDetails details = odetails as PresentationDetails;
+      if (details == null)
+        return;
+
+      CurrentPresentation = details;
     }
 
     /// <summary>
@@ -166,6 +234,7 @@ namespace MediasitePlugin.Models
           PresentationDetails localPresentation = presentation;
           // Keep local variable to avoid changing values in iterations
           item.Command = new MethodDelegateCommand(() => PlayVideo(localPresentation));
+          item.AdditionalProperties[KEY_PRESENTATION] = localPresentation;
           _presentations.Add(item);
         }
         _categoryName = categoryCollection.CategoryName;
@@ -191,10 +260,24 @@ namespace MediasitePlugin.Models
       _categories.FireChange();
     }
 
-
     private void CategoryChanged(AbstractProperty property, object oldvalue)
     {
       RefreshPresentations();
+    }
+
+    private void PresentationChanged(AbstractProperty property, object oldvalue)
+    {
+      PresentationDetails details = CurrentPresentation;
+      if (details == null)
+        return;
+
+      PresentationDescription = details.Description;
+      var presenter = details.Presenters.FirstOrDefault();
+      if (presenter != null)
+      {
+        PresenterName = presenter.DisplayName;
+        PresenterUrl = presenter.ImageUrl;
+      }
     }
 
     public void SelectCategory(CategoryCollection category)

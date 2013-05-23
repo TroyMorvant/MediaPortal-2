@@ -3,7 +3,7 @@
     xmlns="www.team-mediaportal.com/2008/mpf/directx"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:collections="clr-namespace:MediaPortal.UI.Presentation.DataObjects;assembly=MediaPortal.UI"
-    DependsOnStyleResources="Consts,Colors,Buttons,OtherControls"
+    DependsOnStyleResources="Consts,Colors,Buttons,OtherControls,MediaSiteConsts"
     >
   <!-- MediaSite model -->
   <Model x:Key="MediaSiteModel" Id="89A89847-7523-47CB-9276-4EC544B8F19A"/>
@@ -17,14 +17,14 @@
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <Image x:Name="IconImage" Grid.Row="0" Source="{Binding IconPath}" Height="200" Width="200" Stretch="Uniform"/>
+      <Image x:Name="IconImage" Grid.Row="0" Source="{Binding IconPath}" Height="{ThemeResource MS_CategoryImageHeight}" Width="{ThemeResource MS_CategoryImageWidth}" Stretch="Uniform"/>
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding CategoryName}" HorizontalAlignment="Center"
           Color="{ThemeResource TextColor}" FontSize="{ThemeResource TinyFontSize}"
           Margin="5"/>
     </Grid>
   </DataTemplate>
-  
-  <!-- SlidesListViewStyle is used for Slides of a Presentation-->
+
+  <!-- CategoryListViewStyle is used for categories -->
   <Style x:Key="CategoryListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
     <Setter Property="ItemTemplate" Value="{ThemeResource CategoryDataTemplate}"/>
     <Setter Property="ItemsPanel">
@@ -34,6 +34,11 @@
         </ItemsPanelTemplate>
       </Setter.Value>
     </Setter>
+  </Style>
+  
+  <!-- Presentations style -->
+  <Style x:Key="PresentationsListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
+    <Setter Property="SelectionChanged" Value="{CommandStencil Source={StaticResource MediaSiteModel}, Path=SetSelectedItem}"/>
   </Style>
 
   <!-- SlideDataTemplate. -->
@@ -46,7 +51,7 @@
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <Image x:Name="SlideImage" Grid.Row="0" Source="{Binding [URL]}" Height="80" Width="120" Stretch="Uniform" />
+      <Image x:Name="SlideImage" Grid.Row="0" Source="{Binding [URL]}" Height="{ThemeResource MS_SlideHeight}" Width="{ThemeResource MS_SlideWidth}" Stretch="Uniform" />
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding [Name]}"
           Color="{ThemeResource TextColor}" FontSize="{ThemeResource TinyFontSize}"
           Margin="5,0,0,0"/>

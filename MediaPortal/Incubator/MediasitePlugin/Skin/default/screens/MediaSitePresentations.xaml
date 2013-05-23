@@ -13,18 +13,36 @@
     <!-- Contents -->
     <ControlTemplate x:Key="Contents_Template">
       <DockPanel LastChildFill="True" Margin="10" DataContext="{Binding Source={StaticResource MediaSiteModel}}">
-        <Image Source="{Binding Path=CurrentCategory.BannerPath}" DockPanel.Dock="Top" Height="120" />
+        <Image Source="{Binding Path=CurrentCategory.BannerPath}" DockPanel.Dock="Top" Height="{ThemeResource MS_PresentationBannerHeight}" HorizontalAlignment="Stretch" Stretch="UniformToFill" />
 
-        <!-- List of categories -->
-        <ListView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DockPanel.Dock="Center" 
-                  Style="{ThemeResource MenuListViewStyle}"
-                  ItemsSource="{Binding Path=Presentations,Mode=OneTime}">
-          <ListView.Resources>
-            <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
-          </ListView.Resources>
-        </ListView>
+        <Grid DockPanel.Dock="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="{ThemeResource MS_PresenterImageWidth}"/>
+            <ColumnDefinition Width="{ThemeResource MS_PresentationDescriptionWidth}"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Image Source="{Binding PresenterUrl}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DockPanel.Dock="Center"/>
+            <Label Content="{Binding PresenterName}" Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallerFontSize}" DockPanel.Dock="Bottom"/>
+          </DockPanel>
+
+          <Label Grid.Column="1" Content="{Binding PresentationDescription}" Color="{ThemeResource TextColor}"/>
+
+          <!-- List of categories -->
+          <ListView Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Style="{ThemeResource PresentationsListViewStyle}"
+                    ItemsSource="{Binding Path=Presentations,Mode=OneTime}">
+            <ListView.Resources>
+              <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
+            </ListView.Resources>
+          </ListView>
+        </Grid>
+
       </DockPanel>
-
     </ControlTemplate>
 
   </Include.Resources>
