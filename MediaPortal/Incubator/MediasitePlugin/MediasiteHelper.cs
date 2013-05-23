@@ -173,6 +173,17 @@ namespace MediasitePlugin
           {
             foreach (PresentationDetails _pres in tpresentations.Presentations)
             {
+              foreach(PresenterName _presenter in _pres.Presenters)
+              {
+                if (_presenter.ImageUrl.ToLower() == _siteProperties.SiteRootUrl.ToLower() + "/fileserver/presenter/9b194ea8a8294495b76bddb198e760782a")
+                {
+                  _presenter.ImageUrl = _siteProperties.SiteRootUrl.ToLower().Replace("mediasite", "public") + "/FileServer/presenterImages/default/default-speaker.gif";
+                }
+                else
+                {
+                  _presenter.ImageUrl = _presenter.ImageUrl.ToLower().Replace("mediasite/fileserver/presenter/9b194ea8a8294495b76bddb198e760782a", "public/fileserver/presenterImages");
+                }
+              }
               _pres.VideoUrl = _pres.VideoUrl.Replace("$$NAME$$", GetMP4Content(_pres.Content).FileNameWithExtension).Replace("$$PBT$$", CreateAuthTicket(_pres.Id)).Replace("$$SITE$$", _sofoSite);
             }
 
