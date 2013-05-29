@@ -55,6 +55,9 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FreeImageNET">
+      <HintPath>..\..\Extensions\MetadataExtractors\ImageMetadataExtractor\References\FreeImageNET.dll</HintPath>
+    </Reference>
     <Reference Include="SlimDX, Version=2.0.9.42, Culture=neutral, PublicKeyToken=b1b0c32fd1ffe4f9, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>References\SlimDX.dll</HintPath>
@@ -445,6 +448,13 @@
     <Compile Include="Utils\CalcHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\..\Extensions\MetadataExtractors\ImageMetadataExtractor\References\FreeImage.dll">
+      <Link>References\FreeImage.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="References\freetype6.dll" />
+    <Content Include="References\SlimDX.dll" />
+    <Content Include="References\zlib1.dll" />
     <Content Include="Skin\default\screens\skinengine_config_skinresource_dialog.xaml" />
     <None Include="Skin\default\shaders\blur.fx" />
     <None Include="Skin\default\shaders\dialogbg.fx" />
@@ -553,6 +563,8 @@ mkdir "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Skin
 robocopy "$(ProjectDir)Skin" "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Skin" /MIR /NP
 xcopy /Y "$(TargetDir)$(ProjectName).dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
 robocopy "$(ProjectDir)References"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)" /NP
+xcopy "$(TargetDir)References\FreeImage.dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)" 
+xcopy "$(TargetDir)FreeImageNET.dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)" 
 @REM Reset RoboCopy's exit code which is different from 0
 IF %25ERRORLEVEL%25 LSS 8 SET ERRORLEVEL=0
 </PostBuildEvent>
